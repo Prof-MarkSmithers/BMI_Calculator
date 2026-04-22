@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BMI Calculator</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Fraunces:wght@600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    .gauge-fill { transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+    .result-card { animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+    input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; }
+    input[type="range"] { -webkit-appearance: none; background: transparent; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto" style="background-color: #0f1729; font-family: 'DM Sans', sans-serif;">
+   <div class="max-w-lg mx-auto px-5 py-10"><!-- Header -->
+    <div class="text-center mb-8">
+     <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style="background-color: #22d3ee;"><i data-lucide="heart-pulse" style="width:28px;height:28px;color:#0f1729;"></i>
+     </div>
+     <h1 id="main-title" class="text-3xl font-bold mb-1" style="font-family: 'Fraunces', serif; color: #f1f5f9;">BMI Calculator</h1>
+     <p id="subtitle-text" class="text-sm" style="color: #64748b;">Check your Body Mass Index</p>
+    </div><!-- Unit Toggle -->
+    <div class="flex rounded-xl p-1 mb-6" style="background-color: #1e293b;"><button id="btn-metric" onclick="setUnit('metric')" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all" style="background-color: #22d3ee; color: #0f1729;">Metric</button> <button id="btn-imperial" onclick="setUnit('imperial')" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all" style="color: #64748b;">Imperial</button>
+    </div><!-- Inputs -->
+    <div class="space-y-5 mb-8"><!-- Height -->
+     <div class="rounded-2xl p-5" style="background-color: #1e293b;">
+      <div class="flex justify-between items-center mb-3"><label class="text-sm font-medium" style="color: #94a3b8;">Height</label> <span id="height-display" class="text-lg font-bold" style="color: #f1f5f9;">170 cm</span>
+      </div><input type="range" id="height-slider" min="100" max="220" value="170" oninput="updateHeight()" class="w-full" style="accent-color: #22d3ee;">
+     </div><!-- Weight -->
+     <div class="rounded-2xl p-5" style="background-color: #1e293b;">
+      <div class="flex justify-between items-center mb-3"><label class="text-sm font-medium" style="color: #94a3b8;">Weight</label> <span id="weight-display" class="text-lg font-bold" style="color: #f1f5f9;">70 kg</span>
+      </div><input type="range" id="weight-slider" min="30" max="200" value="70" oninput="updateWeight()" class="w-full" style="accent-color: #22d3ee;">
+     </div>
+    </div><!-- Calculate Button --> <button onclick="calculate()" class="w-full py-4 rounded-2xl text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98]" style="background-color: #22d3ee; color: #0f1729;"> Calculate BMI </button> <!-- Result -->
+    <div id="result" class="hidden mt-6"></div>
+   </div>
+  </div>
+  <script>
+  let unit = 'metric';
+  let heightVal = 170, weightVal = 70;
+
+  const defaultConfig = {
+    main_title: 'BMI Calculator',
+    subtitle_text: 'Check your Body Mass Index',
+    background_color: '#0f1729',
+    surface_color: '#1e293b',
+    text_color: '#f1f5f9',
+    primary_action: '#22d3ee',
+    secondary_action: '#64748b',
+    font_family: 'Fraunces',
+    font_size: 16
+  };
+
+  function applyConfig(config) {
+    const bg = config.background_color || defaultConfig.background_color;
+    const surface = config.surface_color || defaultConfig.surface_color;
+    const text = config.text_color || defaultConfig.text_color;
+    const primary = config.primary_action || defaultConfig.primary_action;
+    const secondary = config.secondary_action || defaultConfig.secondary_action;
+    const font = config.font_family || defaultConfig.font_family;
+    const size = config.font_size || defaultConfig.font_size;
+
+    document.getElementById('app').style.backgroundColor = bg;
+    document.getElementById('main-title').textContent = config.main_title || defaultConfig.main_title;
+    document.getElementById('main-title').style.color = text;
+    document.getElementById('main-title').style.fontFamily = `${font}, serif`;
+    document.getElementById('main-title').style.fontSize = `${size * 1.875}px`;
+    document.getElementById('subtitle-text').textContent = config.subtitle_text || defaultConfig.subtitle_text;
+    document.getElementById('subtitle-text').style.color = secondary;
+    document.getElementById('subtitle-text').style.fontSize = `${size * 0.875}px`;
+
+    document.querySelectorAll('[style*="background-color: #1e293b"], .rounded-2xl.p-5').forEach(el => {
+      if (el.style.backgroundColor === 'rgb(30, 41, 59)' || el.style.backgroundColor === surface) el.style.backgroundColor = surface;
+    });
+
+    const surfaces = document.querySelectorAll('#app .rounded-2xl.p-5');
+    surfaces.forEach(s => s.style.backgroundColor = surface);
+
+    const unitToggle = document.querySelector('#app > div > .flex.rounded-xl');
+    if (unitToggle) unitToggle.style.backgroundColor = surface;
+          
+          //when the metric or imperial button is pressed, their attributes are changed here
+    const activeBtn = unit === 'metric' ? document.getElementById('btn-metric') : document.getElementById('btn-imperial');
+    const inactiveBtn = unit === 'metric' ? document.getElementById('btn-imperial') : document.getElementById('btn-metric');
+    inactive_bg = activeBtn.style.backgroundColor;
+    activeBtn.style.backgroundColor = primary;
+    activeBtn.style.color = bg;
+    inactiveBtn.style.color = secondary;
+    inactiveBtn.style.backgroundColor = inactive_bg;
+
+    const calcBtn = document.querySelector('#app button[onclick="calculate()"]');
+    if (calcBtn) { calcBtn.style.backgroundColor = primary; calcBtn.style.color = bg; }
+
+    document.querySelectorAll('label').forEach(l => l.style.fontSize = `${size * 0.875}px`);
+    document.querySelectorAll('#height-display, #weight-display').forEach(s => { s.style.color = text; s.style.fontSize = `${size * 1.125}px`; });
+
+    const icon = document.querySelector('.inline-flex');
+    if (icon) icon.style.backgroundColor = primary;
+
+    document.querySelectorAll('input[type="range"]').forEach(r => r.style.accentColor = primary);
+  }
+  
+  function setUnit(u) {
+    unit = u;
+    const hs = document.getElementById('height-slider');
+    const ws = document.getElementById('weight-slider');
+    if (u === 'imperial') {
+      const ft = Math.round(heightVal / 2.54);
+      hs.min = 48; hs.max = 84; hs.value = ft;
+      const lbs = Math.round(weightVal * 2.205);
+      ws.min = 66; ws.max = 440; ws.value = lbs;
+    } else {
+      hs.min = 100; hs.max = 220; hs.value = heightVal;
+      ws.min = 30; ws.max = 200; ws.value = weightVal;
+    }
+    updateHeight(); updateWeight();
+    applyConfig(window.elementSdk ? window.elementSdk.config : defaultConfig);
+  }
+
+  function updateHeight() {
+    const v = +document.getElementById('height-slider').value;
+    if (unit === 'metric') { heightVal = v; document.getElementById('height-display').textContent = `${v} cm`; }
+    else { heightVal = Math.round(v * 2.54); const ft = Math.floor(v / 12); const inch = v % 12; document.getElementById('height-display').textContent = `${ft}'${inch}"`; }
+  }
+
+  function updateWeight() {
+    const v = +document.getElementById('weight-slider').value;
+    if (unit === 'metric') { weightVal = v; document.getElementById('weight-display').textContent = `${v} kg`; }
+    else { weightVal = Math.round(v / 2.205); document.getElementById('weight-display').textContent = `${v} lbs`; }
+  }
+  //tells a person their BMi with mild interpretations
+  function calculate() {
+    const h = heightVal / 100;
+    const bmi = (weightVal / (h * h)).toFixed(1);
+    let category, color, emoji, tip;
+    if (bmi < 18.5) { category = 'Underweight'; color = '#38bdf8'; emoji = '🍽️'; tip = 'Consider nutrient-rich foods to reach a healthy weight.'; }
+    else if (bmi < 25) { category = 'Normal'; color = '#4ade80'; emoji = '✅'; tip = 'Great job! Maintain your healthy lifestyle.'; }
+    else if (bmi < 30) { category = 'Overweight'; color = '#fbbf24'; emoji = '⚠️'; tip = 'Small changes in diet and activity can help.'; }
+    else { category = 'Obese'; color = '#f87171'; emoji = '🔴'; tip = 'Consult a healthcare professional for guidance.'; }
+
+    const pct = Math.min(100, Math.max(0, ((bmi - 10) / 35) * 100));
+    const config = window.elementSdk ? window.elementSdk.config : defaultConfig;
+    const surface = config.surface_color || defaultConfig.surface_color;
+    const text = config.text_color || defaultConfig.text_color;
+    const secondary = config.secondary_action || defaultConfig.secondary_action;
+
+    document.getElementById('result').innerHTML = `
+      <div class="result-card rounded-2xl p-6" style="background-color:${surface};">
+        <div class="text-center mb-4">
+          <span class="text-4xl">${emoji}</span>
+          <div class="text-5xl font-bold mt-2" style="color:${color};font-family:'Fraunces',serif;">${bmi}</div>
+          <div class="text-sm font-semibold mt-1 uppercase tracking-wider" style="color:${color};">${category}</div>
+        </div>
+        <div class="rounded-full h-2 mb-4" style="background-color:${config.background_color || defaultConfig.background_color};">
+          <div class="gauge-fill h-2 rounded-full" style="width:${pct}%;background-color:${color};"></div>
+        </div>
+        <div class="flex justify-between text-xs mb-4" style="color:${secondary};">
+          <span>Underweight</span><span>Normal</span><span>Overweight</span><span>Obese</span>
+        </div>
+        <p class="text-sm text-center" style="color:${secondary};">${tip}</p>
+      </div>`;
+    document.getElementById('result').classList.remove('hidden');
+  }
+
+  // SDK Init
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => applyConfig(config),
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: v => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: v => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: v => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.primary_action || defaultConfig.primary_action, set: v => { config.primary_action = v; window.elementSdk.setConfig({ primary_action: v }); } },
+        { get: () => config.secondary_action || defaultConfig.secondary_action, set: v => { config.secondary_action = v; window.elementSdk.setConfig({ secondary_action: v }); } },
+      ],
+      borderables: [],
+      fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: v => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+      fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: v => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } },
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['main_title', config.main_title || defaultConfig.main_title],
+      ['subtitle_text', config.subtitle_text || defaultConfig.subtitle_text],
+    ])
+  });
+
+  lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f0012da22afc6a2',t:'MTc3NjgxMzE0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
